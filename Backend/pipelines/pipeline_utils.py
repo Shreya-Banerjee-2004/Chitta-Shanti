@@ -199,11 +199,27 @@ def score_stress(video_features: dict, survey_data: dict) -> dict:
     field_mapping = {
         "age": "Age",
         "gender": "Gender",
+
         "sleep_duration": "Sleep_Duration",
         "sleep_hours_per_night": "Sleep_Duration",
+
         "sleep_quality": "Sleep_Quality",
         "wake_up_time": "Wake_Up_Time",
         "bed_time": "Bed_Time",
+
+        # Current frontend questionnaire fields
+        "physical_activity_hours_daily": "Physical_Activity",
+        "daily_screen_time_hours": "Screen_Time",
+        "caffeinated_drinks_per_day": "Caffeine_Intake",
+        "alcoholic_drinks_per_day": "Alcohol_Intake",
+        "smokes": "Smoking_Habit",
+        "avg_work_hours_per_day": "Work_Hours",
+        "daily_commute_hours": "Travel_Time",
+        "social_activity_hours_per_day": "Social_Interactions",
+        "meditates_regularly": "Meditation_Practice",
+        "preferred_exercise_type": "Exercise_Type",
+
+        # Also support the older/internal names
         "physical_activity": "Physical_Activity",
         "screen_time": "Screen_Time",
         "caffeine_intake": "Caffeine_Intake",
