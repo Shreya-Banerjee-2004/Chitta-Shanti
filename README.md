@@ -1,606 +1,1102 @@
 # Chitta Shanti
 
-## AI-Based Personnel Stress and Welfare Monitoring System
+## AI-Based Personnel Stress & Welfare Monitoring System
 
-Chitta Shanti is an AI-assisted personnel stress and welfare monitoring system designed for CAPFs and armed forces personnel.
+Chitta Shanti is a multimodal AI-based personnel stress and welfare monitoring prototype developed for **Smart India Hackathon (SIH)**.
 
-The system aims to support personnel wellbeing and operational readiness by combining assessment data, AI-based stress analysis, and role-specific welfare workflows.
+The system is designed to support personnel well-being by combining:
 
-The application is designed around three primary user roles:
+- Video-derived biometric indicators
+- Voice features
+- Lifestyle and questionnaire information
+- Multimodal stress scoring
+- Explainability/SHAP-style attribution
+- Readiness classification
+- Welfare triage for medical officers
+- Welfare intervention logging
 
-- Candidate
-- Commander
-- Medical Officer
+The project provides separate interfaces for three types of users:
 
-Each role receives a dedicated interface and access to functionality appropriate to its responsibilities.
+- **Candidate / Personnel**
+- **Commander**
+- **Medical Officer**
 
 ---
 
-## Current Project Status
+# 1. What Does Chitta Shanti Do?
 
-The project currently contains a working React frontend and FastAPI backend.
+The core idea is to perform a personnel stress assessment using two sources of information.
 
-### Implemented
+## 1.1 Video and Voice Assessment
 
-- Candidate, Commander, and Medical Officer role structure
+The candidate records a video through the frontend.
+
+The backend processes the video and extracts features such as:
+
+- Heart rate
+- HRV/RMSSD
+- Blink rate
+- Brow ratio
+- Head movement/jitter
+- Voice pitch mean
+- Voice pitch variation
+
+The backend also performs video quality and liveness checks.
+
+## 1.2 Lifestyle Questionnaire
+
+After the video has been processed, the candidate completes a 16-question questionnaire covering areas such as:
+
+- Age
+- Gender
+- Sleep duration
+- Sleep quality
+- Wake-up time
+- Bedtime
+- Physical activity
+- Screen time
+- Caffeine consumption
+- Alcohol consumption
+- Smoking
+- Work hours
+- Commute time
+- Social activity
+- Meditation
+- Preferred exercise type
+
+## 1.3 Multimodal Assessment
+
+The extracted video/voice information and questionnaire responses are passed to the stress-scoring pipeline.
+
+The system produces:
+
+- Stress probability
+- Stress classification
+- Readiness status
+- Feature attribution information
+
+A high-risk result is classified as:
+
+> **Critical Fatigue**
+
+Otherwise, the current system classifies the candidate as:
+
+> **Cleared**
+
+The readiness status is correspondingly:
+
+- **Mandatory Rest Required**
+- **Fit for Duty**
+
+---
+
+# 2. Current Project Status
+
+The current prototype contains a working end-to-end candidate assessment flow.
+
+## Implemented
+
 - User registration
 - User login
 - JWT-based authentication
-- Role-aware frontend routing
-- Authenticated user profile retrieval
-- Candidate profile page
-- Authenticated user information in the navigation bar
-- Logout and session clearing
-- Commander dashboard UI
-- Medical Officer dashboard UI
-- Welfare triage integration
-- Welfare intervention recording
-- Candidate assessment workflow UI
-- Backend MongoDB integration
-- FastAPI API documentation through Swagger
+- Role-based access control
+- Candidate dashboard
+- Candidate profile
+- Commander dashboard
+- Commander profile
+- Medical Officer dashboard
+- Medical Officer profile
+- Video recording
+- Video upload
+- Video quality checking
+- Liveness checking
+- Video feature extraction
+- Voice feature extraction
+- 16-question questionnaire
+- Multimodal stress scoring
+- Assessment result display
+- Candidate assessment history
+- Commander personnel roster
+- Medical welfare triage
+- Welfare intervention logging
+- Encrypted clinical assessment data
+- Critical fatigue alert trigger
 
-### Currently Being Developed
+## Prototype Limitations
 
-- Candidate assessment submission integration
-- Submission of questionnaire responses to the backend
-- Assessment result integration
-- Assessment history
+This is a prototype intended to demonstrate the system architecture and workflow.
 
-The assessment history interface is intentionally pending until the corresponding backend functionality is implemented.
+It should **not** be treated as a clinically validated diagnostic system or as a production personnel-management system without further validation, security hardening, testing, and domain approval.
 
 ---
 
-# System Architecture
+# 3. System Architecture
+
+The project consists of two main applications.
 
 ```text
-                    ┌───────────────────────┐
-                    │        User           │
-                    └───────────┬───────────┘
-                                │
-                                ▼
-                    ┌───────────────────────┐
-                    │    React + Vite       │
-                    │       Frontend        │
-                    └───────────┬───────────┘
-                                │
-                         HTTP / REST API
-                                │
-                                ▼
-                    ┌───────────────────────┐
-                    │       FastAPI         │
-                    │        Backend        │
-                    └───────────┬───────────┘
-                                │
-                    ┌───────────┴───────────┐
-                    │                       │
-                    ▼                       ▼
-             ┌──────────────┐       ┌──────────────┐
-             │   MongoDB    │       │ AI / Video   │
-             │   Database   │       │  Processing  │
-             └──────────────┘       └──────────────┘
-```
+                   ┌──────────────────────┐
+                   │      Frontend        │
+                   │   React + Vite       │
+                   │   Tailwind CSS       │
+                   └──────────┬───────────┘
+                              │
+                              │ HTTP / REST API
+                              ▼
+                   ┌──────────────────────┐
+                   │       Backend        │
+                   │       FastAPI        │
+                   │                      │
+                   │ Authentication       │
+                   │ Assessment Pipeline  │
+                   │ Video Processing     │
+                   │ Voice Processing     │
+                   │ Stress Scoring       │
+                   │ Welfare APIs         │
+                   └──────────┬───────────┘
+                              │
+                              ▼
+                   ┌──────────────────────┐
+                   │       MongoDB        │
+                   │                      │
+                   │ Users                │
+                   │ Assessment Sessions  │
+                   │ Welfare Interventions│
+                   └──────────────────────┘
+4. Technology Stack
+Frontend
+Technology	Purpose
+React 19	User interface
+Vite 8	Frontend development/build tool
+React Router 7	Application routing
+Tailwind CSS 4	Styling
+Lucide / Lucide React	Icons
+Backend
+Technology	Purpose
+FastAPI	REST API
+Uvicorn	Backend server
+PyMongo	MongoDB connection
+Python-dotenv	Environment configuration
+Passlib + bcrypt	Password hashing
+python-jose	JWT authentication
+Cryptography	Data encryption
+OpenCV	Video processing
+MediaPipe	Facial/landmark processing
+NumPy	Numerical processing
+Pandas	Data processing
+SciPy	Scientific processing
+Librosa	Audio processing
+Joblib	Machine-learning model loading
+SHAP	Explainability support
+Google GenAI	Google AI integration
+HTTPX	HTTP communication
+Database
 
----
+The backend uses:
 
-# Technology Stack
+MongoDB
 
-## Frontend
+The default local database name is:
 
-- React
-- Vite
-- Tailwind CSS
-- React Router
-- Lucide React
+stress_detector
+5. Project Structure
 
-## Backend
+The main project structure is:
 
-- Python
-- FastAPI
-- Uvicorn
-- PyMongo
-- MongoDB
-- Passlib
-- bcrypt
-- Python-JOSE
-- OpenCV
-- MediaPipe
-- Librosa
-
----
-
-# Project Structure
-
-```text
-Chitta Shanti/
+Chitta-Shanti/
 │
 ├── Backend/
 │   ├── api/
-│   │   ├── assessment_api.py
-│   │   └── auth_api.py
+│   │   ├── auth_api.py
+│   │   └── assessment_api.py
 │   │
 │   ├── pipelines/
 │   │   ├── pipeline_utils.py
 │   │   └── video_processing.py
 │   │
+│   ├── models/
+│   │   └── lifestyle_stress_model.joblib
+│   │
 │   ├── database.py
 │   ├── main.py
 │   ├── models_db.py
+│   ├── security_utils.py
+│   ├── notifications.py
 │   ├── requirements.txt
-│   └── .venv/              # Local only, not committed
+│   └── .env
 │
 ├── frontend/
 │   ├── src/
 │   │   ├── api/
-│   │   ├── assets/
 │   │   ├── components/
 │   │   ├── pages/
-│   │   ├── routes/
-│   │   └── utils/
+│   │   ├── utils/
+│   │   ├── router.jsx
+│   │   └── main.jsx
 │   │
 │   ├── package.json
 │   └── ...
 │
-├── .gitignore
 └── README.md
-```
+6. Requirements
 
----
+Before running the project, install the following software.
 
-# Backend Setup
+Required
+Python
 
-## Requirements
+Install Python 3.10 or newer.
 
-Install:
+Check whether Python is already installed:
 
-- Python 3.10+
-- MongoDB
-- Node.js and npm for the frontend
+python --version
 
-The backend has been tested with Python 3.13.1 and MongoDB 8.3.11 during development.
+or:
 
----
+python3 --version
+Node.js and npm
 
-## 1. Navigate to the Backend
+The frontend requires Node.js and npm.
 
-```bash
+Check:
+
+node --version
+npm --version
+
+If these commands do not work, install Node.js before continuing.
+
+MongoDB
+
+Chitta Shanti uses MongoDB as its database.
+
+A local MongoDB server can be used with the default configuration:
+
+mongodb://localhost:27017
+
+The default database name is:
+
+stress_detector
+
+The backend automatically creates/ensures its required indexes when it starts.
+
+7. Downloading the Project
+
+If you are not familiar with Git, you can download the project directly from GitHub.
+
+Open the project repository on GitHub.
+Click Code.
+Select Download ZIP.
+Extract the ZIP file.
+Open the extracted Chitta-Shanti folder.
+
+You should see:
+
+Backend
+frontend
+README.md
+8. Backend Setup
+
+Open a terminal inside the project directory.
+
+Move into the backend:
+
 cd Backend
-```
+8.1 Create a Python Virtual Environment
 
----
+Create a virtual environment:
 
-## 2. Create a Virtual Environment
+python -m venv venv
 
-### Windows
+A virtual environment keeps the project's Python packages separate from other Python projects on your computer.
 
-```powershell
-python -m venv .venv
-```
+Windows
 
-Activate it:
+Activate it with:
 
-```powershell
-.venv\Scripts\Activate.ps1
-```
+venv\Scripts\activate
 
-### Linux/macOS
+After activation, your terminal will normally show something similar to:
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
+(venv)
+8.2 Install Backend Dependencies
 
----
+Install all required Python packages:
 
-## 3. Install Backend Dependencies
-
-```bash
 pip install -r requirements.txt
-```
 
----
+The repository already contains the complete dependency list, so individual packages do not need to be installed manually.
 
-## 4. Configure Environment Variables
+9. Backend Environment Configuration
 
-Create a `.env` file inside `Backend/`.
+The backend uses a .env file.
 
-Example:
+Create:
 
-```env
+Backend/.env
+
+The important encryption variable is:
+
+FIELD_ENCRYPTION_KEY=your-generated-key
+
+MongoDB can use the built-in defaults, but they can also be explicitly specified:
+
 MONGO_URI=mongodb://localhost:27017
 MONGO_DB_NAME=stress_detector
-```
+FIELD_ENCRYPTION_KEY=your-generated-key
+Generate the Encryption Key
 
-Do not commit the actual `.env` file to GitHub.
+From the Backend directory, run:
 
----
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 
-## 5. Start MongoDB
+The command will output a key similar to:
 
-MongoDB must be running before starting the backend.
+some-long-generated-fernet-key
 
-The default database configuration is:
+Copy that value into:
 
-```text
-MongoDB URI: mongodb://localhost:27017
-Database:    stress_detector
-```
+FIELD_ENCRYPTION_KEY=some-long-generated-fernet-key
+Important
 
-These values can be overridden through the `.env` file.
+Keep this key safe.
 
----
+Do not commit your real .env file or encryption key to GitHub.
 
-## 6. Start the FastAPI Server
+Changing the encryption key after encrypted clinical records have been created can make those records unreadable.
 
-From the `Backend` directory:
+10. Start MongoDB
 
-```bash
+Make sure MongoDB is running before starting the backend.
+
+For a standard local MongoDB installation, the backend expects:
+
+mongodb://localhost:27017
+
+If you are using a different MongoDB server, change MONGO_URI in Backend/.env.
+
+11. Start the Backend
+
+Make sure you are inside:
+
+Chitta-Shanti/Backend
+
+and that the virtual environment is activated.
+
+Run:
+
 python -m uvicorn main:app --reload
-```
 
-The backend will normally be available at:
+The backend should become available at:
 
-```text
-http://127.0.0.1:8000
-```
+http://localhost:8000
 
-Swagger API documentation:
+You can also open the FastAPI interactive documentation at:
 
-```text
-http://127.0.0.1:8000/docs
-```
+http://localhost:8000/docs
 
----
+The root endpoint:
 
-# Frontend Setup
+http://localhost:8000/
 
-Open a second terminal and navigate to the frontend:
+returns a simple online status.
 
-```bash
+12. Frontend Setup
+
+Open a new terminal window.
+
+Move into the frontend:
+
 cd frontend
-```
 
-Install dependencies:
+Install the frontend dependencies:
 
-```bash
 npm install
-```
 
-Start the Vite development server:
+The required versions and packages are defined in:
 
-```bash
+frontend/package.json
+13. Frontend Environment Configuration
+
+A frontend .env file is optional.
+
+By default, the frontend connects to:
+
+http://localhost:8000
+
+If your backend is running somewhere else, create:
+
+frontend/.env
+
+and specify:
+
+VITE_API_BASE_URL=http://localhost:8000
+
+For example, if the backend is running on another machine:
+
+VITE_API_BASE_URL=http://192.168.x.x:8000
+
+Use the actual address of the machine running the backend.
+
+14. Start the Frontend
+
+From the frontend directory:
+
 npm run dev
-```
 
-The frontend will normally be available at:
+Vite will display the local development address in the terminal.
 
-```text
-http://localhost:5173
-```
+Open that address in your browser.
 
----
+The frontend communicates with the FastAPI backend using the configured VITE_API_BASE_URL.
 
-# Authentication
+15. Running the Complete System
+
+You normally need three things running:
+
+Terminal 1
+MongoDB
+Terminal 2
+Backend
+
+python -m uvicorn main:app --reload
+Terminal 3
+Frontend
+
+npm run dev
+
+The overall connection is:
+
+Browser
+   │
+   ▼
+React Frontend
+   │
+   │ HTTP requests
+   ▼
+FastAPI Backend
+   │
+   ├── Video / Voice Processing
+   ├── Stress Scoring
+   ├── Authentication
+   └── Welfare APIs
+   │
+   ▼
+MongoDB
+16. Authentication
 
 Chitta Shanti uses JWT-based authentication.
 
-## Supported Roles
+There are three supported roles:
 
-### Candidate
+candidate
+commander
+medical_officer
 
-Candidates can:
+Users register with:
 
-- Start a new assessment
-- Record an assessment response
-- Complete the wellbeing questionnaire
-- View their profile
-- Log out
+Username
+Full name
+Password
+Role
+Unit ID
 
-### Commander
+After login, the backend returns an access token.
 
-Commanders can access:
+The frontend stores the authentication information locally and uses the token when communicating with protected APIs.
 
-- Command Centre
-- Personnel information
-- Profile
+17. Candidate Assessment Flow
 
-### Medical Officer
+The current assessment process is a two-stage workflow.
 
-Medical Officers can access:
+Stage 1 — Video Assessment
 
-- Medical Dashboard
-- Welfare triage
-- Welfare interventions
-- Profile
+The candidate records a video.
 
----
+The frontend sends the recorded video to:
 
-# Authentication API
+POST /api/assessment/upload-video
 
-## Register
+The backend:
 
-```http
-POST /api/auth/register
-```
-
-Request body:
-
-```json
-{
-  "Username": "test_candidate",
-  "full_name": "Test Candidate",
-  "password": "Test@12345",
-  "role": "candidate",
-  "unit_id": "UNIT-TEST"
-}
-```
-
----
-
-## Login
-
-```http
-POST /api/auth/login
-```
-
-The endpoint expects form-encoded credentials:
-
-```text
-username=<username>
-password=<password>
-```
-
-Successful authentication returns:
-
-```json
-{
-  "access_token": "...",
-  "token_type": "bearer",
-  "role": "candidate"
-}
-```
-
----
-
-## Current User
-
-```http
-GET /api/auth/me
-```
-
-Requires:
-
-```http
-Authorization: Bearer <access_token>
-```
+Receives the video.
+Temporarily saves it for processing.
+Runs video processing.
+Checks video quality.
+Performs a liveness check when available.
+Extracts biometric/video features.
+Extracts voice features.
+Deletes the temporary raw video.
+Creates an assessment session.
+Returns a session_id.
 
 Example response:
 
-```json
 {
-  "user_id": "test_candidate",
-  "full_name": "Test Candidate",
-  "role": "candidate",
-  "unit_id": "UNIT-TEST"
+  "status": "success",
+  "session_id": "SESSION_ID",
+  "message": "Video processed successfully. Proceed to questionnaire."
 }
-```
+Stage 2 — Questionnaire
 
----
+The candidate completes the 16-question questionnaire.
 
-# Assessment API
+The frontend sends the responses together with the previously generated session_id to:
 
-The backend currently exposes the full evaluation endpoint:
+POST /api/assessment/submit-questionnaire
 
-```http
-POST /api/assessment/full-evaluate
-```
+The backend combines:
 
-The endpoint accepts:
+Video features
++
+Voice features
++
+Questionnaire responses
 
-- Assessment video
-- Duty-hours streak
-- Relaxation hours preceding the assessment
+and passes them to the multimodal stress-scoring pipeline.
 
-Authentication is required.
+18. The 16 Questionnaire Fields
 
-The endpoint returns information including:
+The current questionnaire contains:
 
-- Session ID
-- Personnel ID
-- Readiness status
-- Classification
-- Stress probability
-- SHAP attribution
-- Timestamp
+Age
+Gender
+Hours of sleep per night
+Sleep quality
+Wake-up time
+Bedtime
+Daily physical activity
+Daily screen time
+Caffeinated drinks per day
+Alcoholic drinks per day
+Smoking
+Average work hours per day
+Daily commute time
+Social activity hours per day
+Regular meditation
+Preferred exercise type
 
-The frontend assessment workflow is currently being integrated with this endpoint.
+The backend receives these using the following field names:
 
-Questionnaire submission is planned for the next stage of backend development.
+age
+gender
+sleep_hours_per_night
+sleep_quality
+wake_up_time
+bed_time
+physical_activity_hours_daily
+daily_screen_time_hours
+caffeinated_drinks_per_day
+alcoholic_drinks_per_day
+smokes
+avg_work_hours_per_day
+daily_commute_hours
+social_activity_hours_per_day
+meditates_regularly
+preferred_exercise_type
+19. Assessment Result
 
----
+After the questionnaire is submitted, the backend returns information including:
 
-# Welfare API
+{
+  "session_id": "...",
+  "personnel_id": "...",
+  "readiness_status": "...",
+  "classification": "...",
+  "stress_probability": 0,
+  "shap_attribution": [],
+  "timestamp": "..."
+}
 
-## Commander Roster
+The candidate can therefore receive:
 
-```http
+Cleared
+Classification:
+Cleared
+
+Readiness:
+Fit for Duty
+
+or:
+
+Critical Fatigue
+Classification:
+Critical Fatigue
+
+Readiness:
+Mandatory Rest Required
+
+The exact result depends on the assessment score produced by the current scoring pipeline.
+
+20. Video Data Handling
+
+The current backend does not permanently store the raw assessment video.
+
+The processing flow is:
+
+Recorded Video
+      │
+      ▼
+Temporary File
+      │
+      ▼
+Video Processing
+      │
+      ├── Biometric Features
+      └── Voice Features
+      │
+      ▼
+Assessment Session
+      │
+      ▼
+Temporary Video Deleted
+
+The extracted assessment information is stored as part of the assessment session.
+
+Clinical assessment information is encrypted before being stored.
+
+21. Candidate Assessment History
+
+Candidates can retrieve their completed assessments using:
+
+GET /api/assessment/my-history
+
+The endpoint returns information such as:
+
+Total assessments
+Number of critical assessments
+Previous classifications
+Stress probabilities
+Heart-rate information
+Attribution information
+Assessment timestamps
+22. Commander Dashboard
+
+Commanders can access:
+
 GET /api/assessment/commander/roster
-```
 
-Accessible to:
+The endpoint provides an anonymized personnel roster.
 
-- Commander
-- Medical Officer
+The response includes:
 
----
+Anonymized candidate ID
+Readiness tag
+Total evaluated personnel
 
-## Welfare Triage
+Readiness is represented as either:
 
-```http
+Fit for Duty
+
+or:
+
+Mandatory Rest Required
+
+The endpoint is available to both:
+
+commander
+medical_officer
+
+roles.
+
+23. Medical Officer Dashboard
+
+Medical officers can access welfare triage information through:
+
 GET /api/assessment/welfare/triage
-```
 
-Accessible to:
+The endpoint focuses on completed assessments classified as:
 
-- Medical Officer
+Critical Fatigue
 
----
+The response can contain:
 
-## Record Welfare Intervention
+Session ID
+Personnel ID
+Risk tier
+Primary attribution driver
+Full attribution information
+Duty-hours information
+Rest information
+Recent workload trend
+Suggested welfare action
 
-```http
+The current suggested action is:
+
+Clinical rest order & psychological check-in.
+24. Welfare Interventions
+
+Medical officers can record welfare interventions using:
+
 POST /api/assessment/welfare/interventions
-```
 
-Example:
+The intervention contains:
 
-```json
-{
-  "personnel_id": "PERSONNEL_ID",
-  "action_type": "Mandatory Rest",
-  "notes": "Recommended additional rest and follow-up."
-}
-```
+Personnel ID
+Session ID
+Action type
+Status
+Optional notes
+Optional scheduled time
 
-Accessible to:
+The intervention is stored in the:
 
-- Medical Officer
+welfare_interventions
 
----
+MongoDB collection.
 
-# Frontend Authentication Flow
-
-```text
-User
- │
- ▼
-Login Page
- │
- ▼
+25. API Overview
+Authentication
+Register
+POST /api/auth/register
+Login
 POST /api/auth/login
- │
- ▼
-JWT + Role
- │
- ▼
-localStorage
- │
- ├───────────────┐
- ▼               ▼
-RoleRoute      /api/auth/me
- │               │
- ▼               ▼
-Dashboard       Profile
-```
+Current User
+GET /api/auth/me
+Assessment
+Upload Video
+POST /api/assessment/upload-video
+Submit Questionnaire
+POST /api/assessment/submit-questionnaire
+Candidate History
+GET /api/assessment/my-history
+Commander / Medical Officer
+Personnel Roster
+GET /api/assessment/commander/roster
+Medical Officer
+Welfare Triage
+GET /api/assessment/welfare/triage
+Welfare Intervention
+POST /api/assessment/welfare/interventions
+26. Interactive API Documentation
 
-Logout clears the stored authentication information and redirects the user to the login page.
+Once the backend is running, FastAPI automatically provides interactive documentation.
 
----
+Open:
 
-# Candidate Assessment Flow
+http://localhost:8000/docs
 
-The current frontend assessment workflow consists of four stages:
+From there, you can inspect the available endpoints and test API requests.
 
-```text
-1. Prompt
-      ↓
-2. Video Recording
-      ↓
-3. Wellbeing Questionnaire
-      ↓
-4. Assessment Result
-```
+This is particularly useful for developers who want to understand how the frontend communicates with the backend.
 
-The current frontend captures the recorded video as a browser `Blob`.
+27. Frontend Commands
 
-Backend integration is being developed so that the recorded video and questionnaire information can be submitted to the appropriate API.
+From:
 
----
-
-# Privacy and Security
-
-The system is designed around role-based access control.
-
-Authentication is enforced through JWT tokens, while backend endpoints restrict access based on user roles.
-
-The frontend does not display or store user passwords.
-
-Environment files containing credentials or secrets must not be committed to the repository.
-
-For a production deployment, additional security controls should be implemented, including:
-
-- Secure secret management
-- HTTPS
-- Production CORS configuration
-- Stronger token/session management
-- Appropriate data-access auditing
-
----
-
-# Development Notes
-
-This repository is currently under active development.
-
-Some frontend elements are placeholders where the backend functionality has not yet been implemented.
-
-In particular:
-
-- Assessment history requires a backend history endpoint.
-- Rank/designation is not currently returned by `/api/auth/me`.
-- Assessment statistics such as total assessments and last check-in require corresponding backend data.
-- Questionnaire submission is currently being redesigned for backend integration.
-
-These values should not be treated as production data until their corresponding backend functionality is implemented.
-
----
-
-# Running the Project Locally
-
-Start MongoDB first.
-
-Then run the backend:
-
-```bash
-cd Backend
-```
-
-### Windows
-
-```powershell
-.venv\Scripts\Activate.ps1
-python -m uvicorn main:app --reload
-```
-
-In a second terminal, run the frontend:
-
-```bash
-cd frontend
+frontend/
+Start Development Server
 npm run dev
-```
+Build Production Frontend
+npm run build
+Run ESLint
+npm run lint
+Preview the Production Build
+npm run preview
+28. Backend Dependencies
 
-Then open:
+All backend Python dependencies are listed in:
 
-```text
-http://localhost:5173
-```
+Backend/requirements.txt
 
-Backend API documentation:
+Install them with:
 
-```text
-http://127.0.0.1:8000/docs
-```
+pip install -r requirements.txt
 
----
+The current project uses packages for:
 
-# Project Goal
+Web API development
+Authentication
+Database connectivity
+Encryption
+Video processing
+Facial landmark processing
+Audio processing
+Numerical analysis
+Machine learning
+Explainability
+HTTP communication
+29. Security and Privacy
 
-Chitta Shanti aims to provide an AI-assisted framework for identifying personnel stress indicators and supporting welfare-oriented decision making while maintaining role-appropriate access to sensitive assessment information.
+The prototype includes several security-related mechanisms.
 
-The system separates operational readiness information from detailed welfare information so that different levels of personnel receive information appropriate to their responsibilities.
+Password Hashing
 
----
+Passwords are not intended to be stored as plain text.
 
-## Status
+The authentication system uses password hashing.
 
-**Active Development**
+JWT Authentication
 
-The current milestone focuses on establishing the complete authentication and role-based application foundation before integrating the candidate assessment submission pipeline.
+Protected API endpoints require authentication tokens.
+
+Role-Based Access Control
+
+Different endpoints are restricted to appropriate roles.
+
+For example:
+
+Candidate
+   → Own assessment/history
+
+Commander
+   → Personnel roster
+
+Medical Officer
+   → Welfare triage
+   → Welfare interventions
+Encrypted Clinical Data
+
+Sensitive assessment information is encrypted before being stored using the configured:
+
+FIELD_ENCRYPTION_KEY
+Raw Video
+
+The current assessment endpoint processes the uploaded video temporarily and removes the temporary raw video after processing.
+
+30. Important Security Note
+
+This repository is a prototype.
+
+Before deploying it in a real operational environment, additional work would be required, including:
+
+Strong production authentication configuration
+Secure secret management
+Restricted CORS configuration
+HTTPS/TLS
+Production database security
+Audit logging
+Access monitoring
+Data retention policies
+Privacy and consent mechanisms
+Security testing
+Model validation
+Domain/clinical validation
+
+Do not use the development configuration as-is for production deployment.
+
+31. Troubleshooting
+Backend Does Not Start
+
+Check that you are inside:
+
+Backend/
+
+and that the virtual environment is active.
+
+Then run:
+
+python -m uvicorn main:app --reload
+ModuleNotFoundError
+
+Install the backend dependencies:
+
+pip install -r requirements.txt
+MongoDB Connection Problems
+
+Make sure MongoDB is running.
+
+The default connection is:
+
+mongodb://localhost:27017
+
+If you use another MongoDB server, verify:
+
+MONGO_URI=...
+MONGO_DB_NAME=...
+Encryption Key Error
+
+If you see an error indicating that:
+
+FIELD_ENCRYPTION_KEY is not set
+
+create/configure:
+
+Backend/.env
+
+and add:
+
+FIELD_ENCRYPTION_KEY=your-generated-key
+
+Generate a key with:
+
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+Frontend Cannot Communicate With Backend
+
+Check that the backend is running:
+
+http://localhost:8000
+
+Then check the frontend API configuration.
+
+By default, the frontend uses:
+
+http://localhost:8000
+
+If the backend is running elsewhere, configure:
+
+VITE_API_BASE_URL=http://YOUR_BACKEND_ADDRESS:8000
+Assessment Video Upload Fails
+
+Check:
+
+Camera permissions
+Browser permissions
+Backend status
+Video quality
+Lighting conditions
+Face positioning
+Whether the backend can process the recorded video
+
+The backend can reject a video if the quality is insufficient.
+
+Liveness Check Fails
+
+The assessment video includes a liveness check when the processing pipeline returns liveness information.
+
+A failed liveness check may occur when the system detects a static or recorded video.
+
+Try recording again with:
+
+Good lighting
+Your face clearly visible
+Your face centered in the frame
+Natural movement
+32. Development Workflow
+
+When modifying the project, the recommended development structure is:
+
+Frontend changes
+       │
+       ▼
+frontend/src/
+
+Backend API changes
+       │
+       ▼
+Backend/api/
+
+Processing/model changes
+       │
+       ▼
+Backend/pipelines/
+
+Database changes
+       │
+       ▼
+Backend/models_db.py
+Backend/database.py
+
+After making changes, test the complete flow:
+
+Login
+  ↓
+Candidate assessment
+  ↓
+Video upload
+  ↓
+Questionnaire
+  ↓
+Assessment result
+  ↓
+History
+
+Then test the role-specific dashboards.
+
+33. Complete First-Time Setup Checklist
+
+For someone setting up the project for the first time:
+
+Install
+ Python
+ Node.js and npm
+ MongoDB
+Backend
+ Open Backend
+ Create Python virtual environment
+ Activate virtual environment
+ Run pip install -r requirements.txt
+ Create Backend/.env
+ Generate FIELD_ENCRYPTION_KEY
+ Start MongoDB
+ Start FastAPI
+Frontend
+ Open a new terminal
+ Open frontend
+ Run npm install
+ Start Vite with npm run dev
+Test
+ Open the frontend
+ Register/login
+ Complete a candidate assessment
+ Verify the assessment result
+ Check assessment history
+ Test commander/medical officer roles if required
+34. Quick Start
+
+For experienced developers, the essential commands are:
+
+Backend
+cd Backend
+
+python -m venv venv
+
+# Windows
+venv\Scripts\activate
+
+pip install -r requirements.txt
+
+Create Backend/.env:
+
+FIELD_ENCRYPTION_KEY=your-generated-key
+MONGO_URI=mongodb://localhost:27017
+MONGO_DB_NAME=stress_detector
+
+Then:
+
+python -m uvicorn main:app --reload
+
+Backend:
+
+http://localhost:8000
+
+API documentation:
+
+http://localhost:8000/docs
+Frontend
+
+In a second terminal:
+
+cd frontend
+npm install
+npm run dev
+35. Project Goal
+
+Chitta Shanti aims to demonstrate how multimodal AI can be used as a supporting tool for personnel welfare and stress monitoring.
+
+The prototype brings together:
+
+Video
+  +
+Voice
+  +
+Lifestyle Information
+  +
+Machine Learning
+  +
+Explainability
+  +
+Role-Based Welfare Workflows
+
+to create a unified personnel stress and welfare monitoring workflow.
+
+Disclaimer
+
+Chitta Shanti is a prototype developed for demonstration and hackathon purposes.
+
+The generated stress classifications and readiness recommendations should not be interpreted as medical diagnoses or as a replacement for qualified medical or psychological assessment.
+
+Any real-world deployment would require appropriate validation, clinical oversight, security review, privacy safeguards, and authorization from the relevant organization.
+
+License
+
+Add the project's applicable license here if one is adopted.
