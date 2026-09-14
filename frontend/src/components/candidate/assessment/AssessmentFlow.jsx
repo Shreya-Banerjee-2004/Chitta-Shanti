@@ -6,23 +6,12 @@ import RecordingStep from "./RecordingStep";
 import QuestionnaireStep from "./QuestionnaireStep";
 import ResultStep from "./ResultStep";
 
+import {
+  uploadAssessmentVideo,
+  submitQuestionnaire,
+} from "../../../api/assessmentApi";
 
-//Mock results
-const MOCK_RESULT = {
-  session_id: "unique_session_id_here",
-  personnel_id: "user_service_id",
-  readiness_status: "Fit for Duty",
-  classification: "Normal",
-  stress_probability: 0.15,
-  shap_attribution: [
-    {
-      feature: "rmssd_ms",
-      description: "Heart rate variability within normal bounds",
-    },
-  ],
-  timestamp: "2026-09-13T20:37:10Z",
-};
-
+import { getAuthToken } from "../../../utils/authToken";
 
 
 const DEFAULT_QUESTION =
@@ -30,20 +19,31 @@ const DEFAULT_QUESTION =
 
 const ALTERNATIVE_QUESTIONS = [
   "Can you describe something recently that affected your energy or concentration?",
-
   "What has been on your mind more than usual over the past few days?",
-
   "Tell me about something this week that made you feel particularly tired or overwhelmed.",
 ];
+
 
 export default function AssessmentFlow() {
   const [currentStep, setCurrentStep] = useState(1);
   const [question, setQuestion] = useState(DEFAULT_QUESTION);
+
   const [recordedVideo, setRecordedVideo] = useState(null);
+  const [sessionId, setSessionId] = useState(null);
+  const [result, setResult] = useState(null);
+
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [isSubmittingQuestionnaire, setIsSubmittingQuestionnaire] =
+    useState(false);
+
+  const [error, setError] = useState("");
+
 
   const handleStartRecording = () => {
+    setError("");
     setCurrentStep(2);
   };
+
 
   const handleDifferentPrompt = () => {
     const availableQuestions = ALTERNATIVE_QUESTIONS.filter(
@@ -57,6 +57,72 @@ export default function AssessmentFlow() {
     setQuestion(availableQuestions[randomIndex]);
   };
 
+
+  const handleVideoComplete = async (videoBlob) => {
+    setRecordedVideo(videoBlob);
+    setError("");
+    setIsUploadingVideo(true);
+
+    try {
+      const token = getAuthToken();
+
+      const response = await uploadAssessmentVideo(
+        token,
+        videoBlob
+      );
+
+      setSessionId(response.session_id);
+
+      setCurrentStep(3);
+    } catch (err) {
+      console.error("Video upload failed:", err);
+      setError(
+        err.message || "Unable to process the recorded video."
+      );
+    } finally {
+      setIsUploadingVideo(false);
+    }
+  };
+
+
+  const handleQuestionnaireComplete = async (questionnaireAnswers) => {
+    setError("");
+    setIsSubmittingQuestionnaire(true);
+
+    try {
+      const token = getAuthToken();
+
+      const response = await submitQuestionnaire(
+        token,
+        sessionId,
+        questionnaireAnswers
+      );
+
+      setResult(response);
+      setCurrentStep(4);
+    } catch (err) {
+      console.error("Questionnaire submission failed:", err);
+      setError(
+        err.message || "Unable to submit the questionnaire."
+      );
+    } finally {
+      setIsSubmittingQuestionnaire(false);
+    }
+  };
+
+
+  const handleNewAssessment = () => {
+    setCurrentStep(1);
+    setQuestion(DEFAULT_QUESTION);
+
+    setRecordedVideo(null);
+    setSessionId(null);
+    setResult(null);
+
+    setError("");
+  };
+
+
   const renderStep = () => {
     switch (currentStep) {
       case 1:
@@ -68,47 +134,68 @@ export default function AssessmentFlow() {
           />
         );
 
+
       case 2:
-  return (
-    <RecordingStep
-      onComplete={(videoBlob) => {
-        setRecordedVideo(videoBlob);
-        setCurrentStep(3);
-      }}
-    />
-  );
+        return (
+          <>
+            <RecordingStep
+              onComplete={handleVideoComplete}
+            />
 
-case 3:
-  return (
-    <QuestionnaireStep
-      onComplete={(questionnaireAnswers) => {
-        console.log("Questionnaire answers:", questionnaireAnswers);
+            {isUploadingVideo && (
+              <div className="mt-6 text-center text-[#858b97]">
+                Processing your video. Please wait...
+              </div>
+            )}
 
-        setCurrentStep(4);
-      }}
-    />
-  );
+            {error && (
+              <div className="mt-6 text-center text-red-600">
+                {error}
+              </div>
+            )}
+          </>
+        );
+
+
+      case 3:
+        return (
+          <>
+            <QuestionnaireStep
+              onComplete={handleQuestionnaireComplete}
+            />
+
+            {isSubmittingQuestionnaire && (
+              <div className="mt-6 text-center text-[#858b97]">
+                Analyzing your assessment. Please wait...
+              </div>
+            )}
+
+            {error && (
+              <div className="mt-6 text-center text-red-600">
+                {error}
+              </div>
+            )}
+          </>
+        );
+
 
       case 4:
         return (
-<ResultStep
-  result={MOCK_RESULT}
-  onNewAssessment={() => {
-    setCurrentStep(1);
-    setQuestion(DEFAULT_QUESTION);
-    setRecordedVideo(null);
-  }}
-  onViewHistory={() => {
-    // We'll connect this to /candidate/history
-    // once we build the History page.
-  }}
-/>
+          <ResultStep
+            result={result}
+            onNewAssessment={handleNewAssessment}
+            onViewHistory={() => {
+              // We'll connect this to /candidate/history later.
+            }}
+          />
         );
+
 
       default:
         return null;
     }
   };
+
 
   const stepDescription = {
     1: "read your prompt",
@@ -117,8 +204,10 @@ case 3:
     4: "review your result",
   };
 
+
   return (
     <section className="w-full">
+
       {/* Heading */}
       <div className="text-center mb-8">
         <h1
@@ -146,13 +235,16 @@ case 3:
         </p>
       </div>
 
+
       {/* Stepper */}
       <div className="mb-10">
         <ProgressStepper currentStep={currentStep} />
       </div>
 
+
       {/* Current step */}
       {renderStep()}
+
     </section>
   );
 }

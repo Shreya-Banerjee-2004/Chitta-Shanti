@@ -5,6 +5,7 @@ import pandas as pd
 from scipy import signal as sps
 import librosa
 
+
 # ---------------------------------------------------------
 # 1. Biometric Signal Processing Functions
 # ---------------------------------------------------------
@@ -139,88 +140,223 @@ def extract_voice_stress_features(audio_data, sr=22050):
         "vocal_stress_subscore": round(float(vocal_subscore), 1),
     }
 
+MODEL_PATH = os.path.join(
+    os.path.dirname(__file__),
+    "..",
+    "models",
+    "lifestyle_stress_model.joblib"
+)
 
-# ---------------------------------------------------------
-# 2. Multimodal Fusion Engine (Biometric + Kaggle RF)
-# ---------------------------------------------------------
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "..", "models", "lifestyle_stress_model.joblib")
 _lifestyle_model = None
+
 
 def _load_lifestyle_model():
     global _lifestyle_model
+
     if _lifestyle_model is None and os.path.exists(MODEL_PATH):
         try:
             _lifestyle_model = joblib.load(MODEL_PATH)
         except Exception:
             _lifestyle_model = None
+
     return _lifestyle_model
 
 
+def parse_time_to_hours(time_str):
+    """
+    Convert a time string such as '07:30 AM' or '23:30'
+    into decimal hours.
+    """
+    if time_str is None or time_str == "":
+        return 7.0
+
+    if isinstance(time_str, (int, float)):
+        return float(time_str)
+
+    time_str = str(time_str).strip()
+
+    dt = pd.to_datetime(
+        time_str,
+        format="%I:%M %p",
+        errors="coerce"
+    )
+
+    if pd.isna(dt):
+        dt = pd.to_datetime(
+            time_str,
+            format="%H:%M",
+            errors="coerce"
+        )
+
+    if pd.isna(dt):
+        return 7.0
+
+    return dt.hour + dt.minute / 60.0
+
+
 def score_stress(video_features: dict, survey_data: dict) -> dict:
-    """
-    Computes Biometric Subscore + Kaggle Lifestyle Model Prediction -> Merges outputs.
-    """
-    # 1. Biometric Subscore (Forehead rPPG, Voice, Behavior)
+
+    field_mapping = {
+        "age": "Age",
+        "gender": "Gender",
+        "sleep_duration": "Sleep_Duration",
+        "sleep_hours_per_night": "Sleep_Duration",
+        "sleep_quality": "Sleep_Quality",
+        "wake_up_time": "Wake_Up_Time",
+        "bed_time": "Bed_Time",
+        "physical_activity": "Physical_Activity",
+        "screen_time": "Screen_Time",
+        "caffeine_intake": "Caffeine_Intake",
+        "alcohol_intake": "Alcohol_Intake",
+        "smoking_habit": "Smoking_Habit",
+        "work_hours": "Work_Hours",
+        "travel_time": "Travel_Time",
+        "social_interactions": "Social_Interactions",
+        "meditation_practice": "Meditation_Practice",
+        "exercise_type": "Exercise_Type",
+    }
+
+    mapped_survey = {}
+
+    for k, v in survey_data.items():
+        mapped_key = field_mapping.get(k.lower(), k)
+
+        if mapped_key in ("Wake_Up_Time", "Bed_Time"):
+            v = parse_time_to_hours(v)
+
+        mapped_survey[mapped_key] = v
+
+    # 1. Biometric Subscore
     rmssd = video_features.get("rmssd_ms", 45.0)
-    s_hrv = (1.0 - (np.clip(rmssd, 20.0, 80.0) - 20.0) / 60.0) * 100.0
-    s_voice = min(100.0, max(0.0, video_features.get("pitch_std_hz", 5.0) * 4.0))
+
+    s_hrv = (
+        1.0 -
+        (np.clip(rmssd, 20.0, 80.0) - 20.0) / 60.0
+    ) * 100.0
+
+    s_voice = min(
+        100.0,
+        max(0.0, video_features.get("pitch_std_hz", 5.0) * 4.0)
+    )
 
     blink_rate = video_features.get("blink_rate_bpm", 18.0)
     brow_ratio = video_features.get("brow_ratio", 0.22)
-    s_blink = np.clip((blink_rate - 14.0) / (32.0 - 14.0) * 100.0, 0, 100)
-    s_brow = np.clip((0.22 - brow_ratio) / (0.22 - 0.14) * 100.0, 0, 100)
+
+    s_blink = np.clip(
+        (blink_rate - 14.0) / (32.0 - 14.0) * 100.0,
+        0,
+        100
+    )
+
+    s_brow = np.clip(
+        (0.22 - brow_ratio) / (0.22 - 0.14) * 100.0,
+        0,
+        100
+    )
+
     s_behavior = 0.60 * s_blink + 0.40 * s_brow
 
-    biometric_score = (0.40 * s_hrv) + (0.30 * s_voice) + (0.30 * s_behavior)
+    biometric_score = (
+        0.40 * s_hrv +
+        0.30 * s_voice +
+        0.30 * s_behavior
+    )
 
-    # 2. Lifestyle Subscore (Random Forest Model)
+    # 2. Lifestyle Subscore
     model = _load_lifestyle_model()
+
     if model is not None:
         try:
-            df_in = pd.DataFrame([survey_data])
-            lifestyle_score = float(model.predict(df_in)[0])
-            lifestyle_score = float(np.clip(lifestyle_score, 0.0, 100.0))
+            df_in = pd.DataFrame([mapped_survey])
+
+            lifestyle_score = float(
+                model.predict(df_in)[0]
+            )
+
+            lifestyle_score = float(
+                np.clip(lifestyle_score, 0.0, 100.0)
+            )
+
         except Exception:
             lifestyle_score = 50.0
+
     else:
-        lifestyle_score = 50.0  # Heuristic fallback if .joblib missing
+        lifestyle_score = 50.0
 
     # 3. Multimodal Weighted Fusion
-    final_score = round(0.55 * biometric_score + 0.45 * lifestyle_score, 1)
+    final_score = round(
+        0.55 * biometric_score +
+        0.45 * lifestyle_score,
+        1
+    )
+
     stress_prob = round(final_score / 100.0, 2)
+
     is_critical = final_score >= 65.0
 
-    # Insights & Recommendations Generation
-    key_insights, recommendations = [], []
+    # Insights
+    key_insights = []
+    recommendations = []
+
     if rmssd < 30.0:
-        key_insights.append(f"Low HRV (RMSSD: {rmssd}ms) indicates autonomic fatigue.")
-        recommendations.append("Execute 2 minutes of box breathing (4s in, 4s hold, 4s out).")
+        key_insights.append(
+            f"Low HRV (RMSSD: {rmssd}ms) indicates autonomic fatigue."
+        )
+        recommendations.append(
+            "Execute 2 minutes of box breathing (4s in, 4s hold, 4s out)."
+        )
+
     if blink_rate > 25.0:
-        key_insights.append(f"Elevated blink rate ({blink_rate} bpm) signals cognitive strain.")
-    if survey_data.get("Sleep_Duration", 8.0) < 6.5:
-        key_insights.append(f"Sleep deficit ({survey_data.get('Sleep_Duration')} hrs) exacerbates stress.")
-        recommendations.append("Prioritize 7+ hours of uninterrupted sleep.")
+        key_insights.append(
+            f"Elevated blink rate ({blink_rate} bpm) signals cognitive strain."
+        )
+
+    sleep_hours = mapped_survey.get("Sleep_Duration", 8.0)
+
+    try:
+        sleep_hours = float(sleep_hours)
+    except (TypeError, ValueError):
+        sleep_hours = 8.0
+
+    if sleep_hours < 6.5:
+        key_insights.append(
+            f"Sleep deficit ({sleep_hours} hrs) exacerbates stress."
+        )
+        recommendations.append(
+            "Prioritize 7+ hours of uninterrupted sleep."
+        )
 
     if not key_insights:
-        key_insights.append("Biometric markers and lifestyle habits are balanced.")
-        recommendations.append("Maintain existing recovery and sleep routine.")
+        key_insights.append(
+            "Biometric markers and lifestyle habits are balanced."
+        )
+        recommendations.append(
+            "Maintain existing recovery and sleep routine."
+        )
+            # 4. Final Result
+    classification = "Critical Fatigue" if is_critical else "Cleared"
+    readiness_status = (
+        "Mandatory Rest Required"
+        if is_critical
+        else "Fit for Duty"
+    )
+
+    shap_attribution = [
+        {
+            "feature": "biometric_score",
+            "description": f"Multimodal biometric stress score: {biometric_score:.1f}/100",
+        },
+        {
+            "feature": "lifestyle_score",
+            "description": f"Lifestyle-based stress score: {lifestyle_score:.1f}/100",
+        },
+    ]
 
     return {
-        "classification": "Critical Fatigue" if is_critical else "Cleared",
-        "readiness_status": "Mandatory Rest Required" if is_critical else "Fit for Duty",
         "stress_probability": stress_prob,
-        "final_stress_score": final_score,
-        "subscore_breakdown": {
-            "biometric_score": round(biometric_score, 1),
-            "lifestyle_score": round(lifestyle_score, 1),
-            "hrv_subscore": round(s_hrv, 1),
-            "voice_subscore": round(s_voice, 1),
-            "behavior_subscore": round(s_behavior, 1)
-        },
+        "classification": classification,
+        "readiness_status": readiness_status,
+        "shap_attribution": shap_attribution,
         "key_insights": key_insights,
-        "actionable_recommendations": recommendations,
-        "shap_attribution": [
-            {"feature": "Biometric Biomarkers", "importance": round(biometric_score * 0.55 / 100, 2), "description": "Real-time facial/vocal biomarkers"},
-            {"feature": "Lifestyle Factors", "importance": round(lifestyle_score * 0.45 / 100, 2), "description": "Reported sleep, workload, and habits"}
-        ]
+        "recommendations": recommendations,
     }

@@ -1,71 +1,144 @@
 import { useState } from "react";
+
 import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 
 const QUESTIONS = [
   {
-    id: 1,
-    question: "How many hours was your most recent duty shift?",
+    id: "age",
+    question: "How old are you?",
     type: "number",
-    placeholder: "Enter hours",
+    placeholder: "Enter your age",
+    min: 1,
+    max: 120,
+    step: "1",
   },
   {
-    id: 2,
-    question:
-      "How many hours have you been on duty continuously without a proper rest break?",
-    type: "number",
-    placeholder: "Enter hours",
+    id: "gender",
+    question: "What is your gender?",
+    type: "select",
+    options: ["Male", "Female", "Other", "Prefer not to say"],
   },
   {
-    id: 3,
-    question: "How many hours of sleep did you get last night?",
+    id: "sleep_hours_per_night",
+    question: "How many hours of sleep do you usually get per night?",
     type: "number",
     placeholder: "Enter hours",
+    min: 0,
+    max: 24,
+    step: "0.1",
   },
   {
-    id: 4,
-    question:
-      "How would you rate the quality of your sleep last night, from 1 to 10?",
+    id: "sleep_quality",
+    question: "How would you rate the quality of your sleep?",
     type: "scale",
+    min: 1,
+    max: 5,
+    scaleLabels: {
+      1: "Poor",
+      5: "Excellent",
+    },
   },
   {
-    id: 5,
-    question:
-      "How many minutes of physical activity or exercise do you usually get in a day?",
+    id: "wake_up_time",
+    question: "What time do you usually wake up?",
+    type: "time",
+  },
+  {
+    id: "bed_time",
+    question: "What time do you usually go to bed?",
+    type: "time",
+  },
+  {
+    id: "physical_activity_hours_daily",
+    question: "How much time do you spend on physical activities each day?",
     type: "number",
     placeholder: "Enter minutes",
+    min: 0,
+    max: 1440,
+    step: "1",
+    suffix: "minutes per day",
   },
   {
-    id: 6,
-    question:
-      "On a scale of 1 to 10, how stressful has your recent duty period felt?",
-    type: "scale",
-  },
-  {
-    id: 7,
-    question:
-      "How many hours of rest or relaxation did you get before starting your most recent duty?",
+    id: "daily_screen_time_hours",
+    question: "How many hours of screen time do you have per day?",
     type: "number",
     placeholder: "Enter hours",
+    min: 0,
+    max: 24,
+    step: "0.1",
   },
   {
-    id: 8,
-    question:
-      "Approximately how many hours do you spend on your feet or physically active during a typical duty day?",
+    id: "caffeinated_drinks_per_day",
+    question: "How many caffeinated drinks do you consume per day?",
+    type: "number",
+    placeholder: "Enter number of drinks",
+    min: 0,
+    max: 50,
+    step: "1",
+  },
+  {
+    id: "alcoholic_drinks_per_day",
+    question: "How many alcoholic drinks do you consume per day?",
+    type: "number",
+    placeholder: "Enter number of drinks",
+    min: 0,
+    max: 50,
+    step: "1",
+  },
+  {
+    id: "smokes",
+    question: "Do you smoke?",
+    type: "choice",
+    options: ["Yes", "No"],
+  },
+  {
+    id: "avg_work_hours_per_day",
+    question: "What is your average number of work hours per day?",
     type: "number",
     placeholder: "Enter hours",
+    min: 0,
+    max: 24,
+    step: "0.1",
   },
   {
-    id: 9,
+    id: "daily_commute_hours",
     question:
-      "On a scale of 1 to 10, how energetic or rested do you feel at the moment?",
-    type: "scale",
-  },
-  {
-    id: 10,
-    question:
-      "How many hours of your typical day are affected by duty-related responsibilities, including preparation and recovery time?",
+      "How much time do you spend travelling or commuting each day?",
     type: "number",
     placeholder: "Enter hours",
+    min: 0,
+    max: 24,
+    step: "0.1",
+  },
+  {
+    id: "social_activity_hours_per_day",
+    question:
+      "How much time do you spend in social activities per day?",
+    type: "number",
+    placeholder: "Enter hours",
+    min: 0,
+    max: 24,
+    step: "0.1",
+  },
+  {
+    id: "meditates_regularly",
+    question: "Do you meditate regularly?",
+    type: "choice",
+    options: ["Yes", "No"],
+  },
+  {
+    id: "preferred_exercise_type",
+    question: "What is your preferred type of exercise?",
+    type: "select",
+    options: [
+      "Cardio",
+      "Yoga",
+      "Strength Training",
+      "Walking",
+      "Sports",
+      "Other",
+      "None",
+    ],
   },
 ];
 
@@ -74,15 +147,21 @@ export default function QuestionnaireStep({ onComplete }) {
   const [answers, setAnswers] = useState({});
 
   const question = QUESTIONS[currentQuestion];
-
   const currentAnswer = answers[question.id] ?? "";
 
-  const updateAnswer = (value) => {
-    setAnswers((previous) => ({
-      ...previous,
-      [question.id]: value,
-    }));
-  };
+const updateAnswer = (value) => {
+  const numericTypes = ["number", "scale"];
+
+  const processedValue =
+    numericTypes.includes(question.type) && value !== ""
+      ? Number(value)
+      : value;
+
+  setAnswers((previous) => ({
+    ...previous,
+    [question.id]: processedValue,
+  }));
+};
 
   const handleNext = () => {
     if (currentAnswer === "" || currentAnswer === null) {
@@ -98,7 +177,9 @@ export default function QuestionnaireStep({ onComplete }) {
   };
 
   const handlePrevious = () => {
-    if (currentQuestion === 0) return;
+    if (currentQuestion === 0) {
+      return;
+    }
 
     setCurrentQuestion((previous) => previous - 1);
   };
@@ -108,8 +189,6 @@ export default function QuestionnaireStep({ onComplete }) {
 
   return (
     <div className="w-full max-w-[760px] mx-auto">
-
-      {/* Questionnaire card */}
       <div
         className="
           bg-white
@@ -121,7 +200,6 @@ export default function QuestionnaireStep({ onComplete }) {
       >
         {/* Header */}
         <div className="px-7 sm:px-10 pt-8">
-
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-[#d12b63]">
@@ -129,7 +207,8 @@ export default function QuestionnaireStep({ onComplete }) {
               </p>
 
               <p className="mt-1 text-sm text-[#9da0a8]">
-                Question {currentQuestion + 1} of {QUESTIONS.length}
+                Question {currentQuestion + 1} of{" "}
+                {QUESTIONS.length}
               </p>
             </div>
 
@@ -162,7 +241,6 @@ export default function QuestionnaireStep({ onComplete }) {
 
         {/* Question */}
         <div className="px-7 sm:px-10 py-10">
-
           <h2
             className="
               text-[#172033]
@@ -180,8 +258,9 @@ export default function QuestionnaireStep({ onComplete }) {
             <div className="mt-8">
               <input
                 type="number"
-                min="0"
-                step="0.1"
+                min={question.min}
+                max={question.max}
+                step={question.step}
                 value={currentAnswer}
                 onChange={(event) =>
                   updateAnswer(event.target.value)
@@ -203,47 +282,166 @@ export default function QuestionnaireStep({ onComplete }) {
                   transition
                 "
               />
+
+              {question.suffix && (
+                <p className="mt-2 text-sm text-[#9da0a8]">
+                  {question.suffix}
+                </p>
+              )}
             </div>
           )}
 
-          {/* 1–10 scale */}
+          {/* Time input */}
+          {question.type === "time" && (
+            <div className="mt-8">
+              <input
+                type="time"
+                value={currentAnswer}
+                onChange={(event) =>
+                  updateAnswer(event.target.value)
+                }
+                className="
+                  w-full
+                  px-5
+                  py-4
+                  rounded-xl
+                  border border-[#e8d6de]
+                  bg-[#fffafb]
+                  text-[#172033]
+                  text-lg
+                  outline-none
+                  focus:border-[#d12b63]
+                  focus:ring-4
+                  focus:ring-[#d12b63]/10
+                  transition
+                "
+              />
+            </div>
+          )}
+
+          {/* Select input */}
+          {question.type === "select" && (
+            <div className="mt-8">
+              <select
+                value={currentAnswer}
+                onChange={(event) =>
+                  updateAnswer(event.target.value)
+                }
+                className="
+                  w-full
+                  px-5
+                  py-4
+                  rounded-xl
+                  border border-[#e8d6de]
+                  bg-[#fffafb]
+                  text-[#172033]
+                  text-lg
+                  outline-none
+                  focus:border-[#d12b63]
+                  focus:ring-4
+                  focus:ring-[#d12b63]/10
+                  transition
+                "
+              >
+                <option value="" disabled>
+                  Select an option
+                </option>
+
+                {question.options.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Yes / No / choice buttons */}
+          {question.type === "choice" && (
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {question.options.map((option) => {
+                const selected = currentAnswer === option;
+
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => updateAnswer(option)}
+                    className={`
+                      px-5
+                      py-4
+                      rounded-xl
+                      border
+                      font-semibold
+                      text-lg
+                      transition-all
+                      ${
+                        selected
+                          ? "bg-[#d12b63] border-[#d12b63] text-white shadow-[0_5px_0_#a91f4e]"
+                          : "bg-[#fffafb] border-[#e8d6de] text-[#76243f] hover:bg-[#fff0f4] hover:border-[#dcaec0]"
+                      }
+                    `}
+                  >
+                    {option}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Scale */}
           {question.type === "scale" && (
             <div className="mt-8">
+              <div className="grid grid-cols-5 gap-2">
+                {Array.from(
+                  {
+                    length:
+                      question.max - question.min + 1,
+                  },
+                  (_, index) => {
+                    const value = question.min + index;
 
-              <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
-                {Array.from({ length: 10 }, (_, index) => {
-                  const value = index + 1;
-                  const selected =
-                    Number(currentAnswer) === value;
+                    const selected =
+                      Number(currentAnswer) === value;
 
-                  return (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => updateAnswer(value)}
-                      className={`
-                        h-12
-                        rounded-xl
-                        border
-                        font-semibold
-                        transition-all
-                        ${
-                          selected
-                            ? "bg-[#d12b63] border-[#d12b63] text-white shadow-[0_4px_0_#a91f4e]"
-                            : "bg-[#fffafb] border-[#e8d6de] text-[#76243f] hover:bg-[#fff0f4] hover:border-[#dcaec0]"
-                        }
-                      `}
-                    >
-                      {value}
-                    </button>
-                  );
-                })}
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => updateAnswer(value)}
+                        className={`
+                          h-12
+                          rounded-xl
+                          border
+                          font-semibold
+                          transition-all
+                          ${
+                            selected
+                              ? "bg-[#d12b63] border-[#d12b63] text-white shadow-[0_4px_0_#a91f4e]"
+                              : "bg-[#fffafb] border-[#e8d6de] text-[#76243f] hover:bg-[#fff0f4] hover:border-[#dcaec0]"
+                          }
+                        `}
+                      >
+                        {value}
+                      </button>
+                    );
+                  }
+                )}
               </div>
 
-              <div className="mt-3 flex justify-between text-xs text-[#9da0a8]">
-                <span>1</span>
-                <span>10</span>
-              </div>
+              {question.scaleLabels && (
+                <div className="mt-3 flex justify-between text-xs text-[#9da0a8]">
+                  <span>
+                    {question.min}:{" "}
+                    {question.scaleLabels[question.min]}
+                  </span>
+
+                  <span>
+                    {question.max}:{" "}
+                    {question.scaleLabels[question.max]}
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -315,9 +513,9 @@ export default function QuestionnaireStep({ onComplete }) {
         </div>
       </div>
 
-      {/* Small reassurance */}
       <p className="mt-5 text-center text-sm text-[#9da0a8]">
-        Answer as accurately as you can. There are no right or wrong answers.
+        Answer as accurately as you can. There are no right or
+        wrong answers.
       </p>
     </div>
   );

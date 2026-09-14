@@ -8,7 +8,9 @@ import CandidateDashboardPage from "./pages/candidate/CandidateDashboardPage";
 import ProfilePage from "./pages/candidate/ProfilePage";
 
 import CommanderDashboardPage from "./pages/commander/CommanderDashboardPage";
+import CommanderProfilePage from "./pages/commander/CommanderProfilePage";
 import MedicalOfficerDashboardPage from "./pages/medical/MedicalOfficerDashboardPage";
+import MedicalOfficerProfilePage from "./pages/medical/MedicalOfficerProfilePage";
 
 import RoleRoute from "./routes/RoleRoute";
 
@@ -54,6 +56,14 @@ export const router = createBrowserRouter([
       </RoleRoute>
     ),
   },
+  {
+  path: "/commander/profile",
+  element: (
+    <RoleRoute allowedRole="commander">
+      <CommanderProfilePage />
+    </RoleRoute>
+  ),
+},
 
   {
     path: "/medical",
@@ -63,4 +73,12 @@ export const router = createBrowserRouter([
       </RoleRoute>
     ),
   },
+  {
+  path: "/medical/profile",
+  element: (
+    <RoleRoute allowedRole="medical_officer">
+      <MedicalOfficerProfilePage />
+    </RoleRoute>
+  ),
+},
 ]);

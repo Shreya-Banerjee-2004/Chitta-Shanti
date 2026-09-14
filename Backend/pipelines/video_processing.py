@@ -203,5 +203,8 @@ def run_audio_processing_from_video(video_path: str):
         audio_data, sr = librosa.load(wav_path, sr=22050, mono=True)
         return extract_voice_stress_features(audio_data, sr=sr)
     finally:
-        if os.path.exists(wav_path):
-            os.remove(wav_path)
+        try:
+            if os.path.exists(wav_path):
+                os.remove(wav_path)
+        except FileNotFoundError:
+            pass
