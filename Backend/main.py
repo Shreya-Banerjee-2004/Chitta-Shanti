@@ -5,6 +5,7 @@ from models_db import ensure_indexes
 from api.auth_api import router as auth_router
 from api.assessment_api import router as assessment_router
 
+
 # Sets up Mongo indexes on startup (unique personnel_id, query indexes on
 # assessment_sessions). Safe to call every run.
 ensure_indexes()
@@ -26,6 +27,7 @@ app.add_middleware(
 
 app.include_router(auth_router, prefix="/api/auth", tags=["Auth & RBAC"])
 app.include_router(assessment_router, prefix="/api/assessment", tags=["Assessment & Dashboards"])
+
 
 
 @app.get("/")

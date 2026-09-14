@@ -37,7 +37,7 @@ def get_pts(landmarks, indices, w, h):
     return np.array([[landmarks[i].x * w, landmarks[i].y * h] for i in indices])
 
 
-def run_opencv_processing(temp_path: str):
+def run_opencv_processing(temp_path: str, challenge_sequence: str = None):
     """
     Reads the uploaded video, runs MediaPipe FaceMesh per frame, and extracts:
       - hr_bpm, rmssd_ms   (forehead rPPG via pos_algorithm/bandpass_filter/estimate_hr_and_hrv)

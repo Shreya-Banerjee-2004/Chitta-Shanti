@@ -1,51 +1,8 @@
 """
 No ORM classes here — Mongo is schemaless, so this file just documents the
 document shapes each collection holds, plus index setup and an id helper.
-Collections used: personnel, assessment_sessions, welfare_interventions.
-
-personnel document:
-{
-    "_id": <uuid str>,
-    "Username": str,                # unique, natural key used everywhere else
-    "full_name": str,
-    "hashed_password": str,
-    "role": str,                   # candidate | commander | medical_officer
-    "unit_id": str,
-    "baseline_hr_bpm": float | None,
-    "baseline_pitch_hz": float | None,
-    "created_at": datetime,
-}
-# Note: duty_hours_streak / relax_hours_preceding are NOT stored here —
-# the candidate sends them fresh with every /full-evaluate call instead,
-# so they only ever live on the assessment_sessions record below.
-
-assessment_sessions document:
-{
-    "_id": <uuid str>,
-    "personnel_id": str,
-    "duty_hours_streak": float,
-    "relax_hours_preceding": float,
-    "hr_bpm": float,
-    "rmssd_ms": float,
-    "blink_rate_bpm": float,
-    "brow_ratio": float,
-    "head_jitter": float,          # logged for now, not yet used in scoring
-    "pitch_mean_hz": float,
-    "pitch_std_hz": float,
-    "stress_probability": float,
-    "classification": str,         # "Cleared" | "Critical Fatigue"
-    "shap_attribution": list[dict],
-    "created_at": datetime,
-}
-
-welfare_interventions document:
-{
-    "_id": <uuid str>,
-    "personnel_id": str,
-    "action_type": str,
-    "notes": str,
-    "created_at": datetime,
-}
+Collections used: personnel, assessment_sessions, welfare_interventions,
+revoked_tokens.
 """
 from pymongo import ASCENDING, DESCENDING
 from database import db
@@ -63,3 +20,9 @@ def ensure_indexes():
     db.assessment_sessions.create_index([("personnel_id", ASCENDING), ("created_at", DESCENDING)])
     db.assessment_sessions.create_index([("classification", ASCENDING), ("created_at", DESCENDING)])
     db.welfare_interventions.create_index([("personnel_id", ASCENDING)])
+    db.welfare_interventions.create_index([("session_id", ASCENDING)])
+    
+    # TTL index: Mongo auto-deletes a revoked_tokens doc once "expires_at" is
+    # in the past — matching token expiration so the blacklist never grows.
+    db.revoked_tokens.create_index([("expires_at", ASCENDING)], expireAfterSeconds=0)
+    db.revoked_tokens.create_index([("jti", ASCENDING)], unique=True)
